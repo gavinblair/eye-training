@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Line Intersection Trainer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 15px;
+            color: white;
+        }
+        
+        .game-container {
+            width: 100%;
+            max-width: 500px;
+            background: rgba(0, 0, 0, 0.7);
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+            text-align: center;
+        }
+        
+        h1 {
+            font-size: 2.2rem;
+            margin-bottom: 10px;
+            background: linear-gradient(to right, #ff9966, #ff5e62);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        
+        .subtitle {
+            font-size: 1.1rem;
+            margin-bottom: 20px;
+            color: #ddd;
+        }
+        
+        .score-container {
+            display: flex;
+            justify-content: space-around;
+            margin: 15px 0;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 12px;
+            border-radius: 12px;
+        }
+        
+        .score-box {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .score-label {
+            font-size: 0.9rem;
+            color: #aaa;
+            margin-bottom: 5px;
+        }
+        
+        .score-value {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #ffcc00;
+        }
+        
+        .canvas-container {
+            position: relative;
+            width: 100%;
+            margin: 15px auto;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            overflow: hidden;
+            height: 300px;
+        }
+        
+        #gameCanvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+            background: white;
+        }
+        
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .input-container {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        label {
+            font-size: 1.1rem;
+            color: #ddd;
+        }
+        
+        .guess-input {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        #percentageInput {
+            width: 100px;
+            height: 50px;
+            border: none;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.9);
+            font-size: 1.8rem;
+            font-weight: bold;
+            text-align: center;
+            padding: 5px;
+            color: #1a2a6c;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        
+        #submitBtn {
+            background: linear-gradient(to right, #00b09b, #96c93d);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            padding: 15px 25px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+        
+        #submitBtn:active {
+            transform: translateY(3px);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        
+        .result-container {
+            min-height: 60px;
+            margin: 15px 0;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            font-size: 1.3rem;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        #resultText {
+            font-weight: bold;
+        }
+        
+        #nextBtn {
+            background: linear-gradient(to right, #2193b0, #6dd5ed);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            padding: 12px 20px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+        
+        #nextBtn:active {
+            transform: translateY(3px);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        
+        .instructions {
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            text-align: left;
+            font-size: 0.95rem;
+            color: #ddd;
+        }
+        
+        .instructions h3 {
+            margin-bottom: 10px;
+            color: #ffcc00;
+        }
+        
+        .instructions ul {
+            padding-left: 20px;
+        }
+        
+        .instructions li {
+            margin-bottom: 8px;
+        }
+        
+        .end-toggle {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 10px;
+        }
+        
+        .end-option {
+            padding: 8px 15px;
+            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .end-option.selected {
+            background: #3498db;
+            box-shadow: 0 0 10px rgba(52, 152, 219, 0.5);
+        }
+        
+        @media (max-width: 480px) {
+            h1 {
+                font-size: 1.8rem;
+            }
+            
+            .subtitle {
+                font-size: 1rem;
+            }
+            
+            .score-value {
+                font-size: 1.5rem;
+            }
+            
+            .canvas-container {
+                height: 250px;
+            }
+            
+            .result-container {
+                font-size: 1.1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <h1>Line Intersection Trainer</h1>
+        <p class="subtitle">Sharpen your artistic estimation skills</p>
+        
+        <div class="score-container">
+            <div class="score-box">
+                <div class="score-label">SCORE</div>
+                <div id="score" class="score-value">0</div>
+            </div>
+            <div class="score-box">
+                <div class="score-label">STREAK</div>
+                <div id="streak" class="score-value">0</div>
+            </div>
+        </div>
+        
+        <div class="canvas-container">
+            <canvas id="gameCanvas"></canvas>
+        </div>
+        
+        <div class="controls">
+            <div class="input-container">
+                <label for="percentageInput">Guess intersection percentage:</label>
+                <div class="guess-input">
+                    <input type="number" id="percentageInput" min="0" max="100" placeholder="0-100">
+                    <span>%</span>
+                </div>
+                
+                <div class="end-toggle">
+                    <div class="end-option selected" id="endA">From End A</div>
+                    <div class="end-option" id="endB">From End B</div>
+                </div>
+            </div>
+            
+            <button id="submitBtn">SUBMIT GUESS</button>
+        </div>
+        
+        <div class="result-container">
+            <div id="resultText"></div>
+            <div id="accuracyText"></div>
+            <button id="nextBtn">NEXT ROUND</button>
+        </div>
+        
+        <div class="instructions">
+            <h3>How to Play:</h3>
+            <ul>
+                <li>Estimate what percentage along the black line the red line intersects it</li>
+                <li>Choose whether to measure from End A or End B</li>
+                <li>Enter your guess as a whole number between 0 and 100</li>
+                <li>Get 3 points for an exact match</li>
+                <li>Get 1 point for guesses within 10% of the actual value</li>
+                <li>Note: Guesses from opposite ends are equivalent (15% from A = 85% from B)</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Canvas setup
+            const canvas = document.getElementById('gameCanvas');
+            const ctx = canvas.getContext('2d');
+            const container = canvas.parentElement;
+            
+            // Game state
+            let score = 0;
+            let streak = 0;
+            let gameState = 'playing'; // 'playing' or 'showingResult'
+            let actualPercentage = 0;
+            let guessPercentage = 0;
+            let selectedEnd = 'endA'; // 'endA' or 'endB'
+            let isAnimating = false;
+            let animationProgress = 0;
+            
+            // Line data
+            let line1 = null;
+            let line2 = null;
+            let intersect = null;
+            
+            // UI elements
+            const scoreElement = document.getElementById('score');
+            const streakElement = document.getElementById('streak');
+            const percentageInput = document.getElementById('percentageInput');
+            const submitBtn = document.getElementById('submitBtn');
+            const nextBtn = document.getElementById('nextBtn');
+            const resultText = document.getElementById('resultText');
+            const accuracyText = document.getElementById('accuracyText');
+            const endAOption = document.getElementById('endA');
+            const endBOption = document.getElementById('endB');
+            
+            // Resize canvas to fit container
+            function resizeCanvas() {
+                canvas.width = container.clientWidth;
+                canvas.height = container.clientHeight;
+                if (line1 && line2 && intersect) {
+                    drawScene();
+                }
+            }
+            
+            // Initialize game
+            function initGame() {
+                window.addEventListener('resize', resizeCanvas);
+                submitBtn.addEventListener('click', submitGuess);
+                nextBtn.addEventListener('click', nextRound);
+                percentageInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') submitGuess();
+                });
+                
+                // End selection
+                endAOption.addEventListener('click', () => selectEnd('endA'));
+                endBOption.addEventListener('click', () => selectEnd('endB'));
+                
+                resizeCanvas();
+                generateNewLines();
+                startAnimation();
+            }
+            
+            // Select which end to measure from
+            function selectEnd(end) {
+                selectedEnd = end;
+                endAOption.classList.toggle('selected', end === 'endA');
+                endBOption.classList.toggle('selected', end === 'endB');
+            }
+            
+            // Start line drawing animation
+            function startAnimation() {
+                isAnimating = true;
+                animationProgress = 0;
+                animateLines();
+            }
+            
+            // Animate the lines drawing
+            function animateLines() {
+                if (!isAnimating) return;
+                
+                animationProgress += 0.02;
+                if (animationProgress > 1) {
+                    animationProgress = 1;
+                    isAnimating = false;
+                }
+                
+                drawScene();
+                
+                if (animationProgress < 1) {
+                    requestAnimationFrame(animateLines);
+                }
+            }
+            
+            // Generate new random lines
+            function generateNewLines() {
+                // Clear the canvas
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                // Center of canvas
+                const centerX = canvas.width / 2;
+                const centerY = canvas.height / 2;
+                
+                // Calculate max line length based on canvas size
+                const maxLineLength = Math.min(canvas.width, canvas.height) * 0.4;
+                
+                // Generate first line (black)
+                const line1Length = maxLineLength * (0.6 + Math.random() * 0.4); // 60-100% of max
+                const line1Angle = Math.random() * Math.PI * 2; // 0-360 degrees
+                
+                // Calculate endpoints for first line
+                const line1EndX = centerX + line1Length * Math.cos(line1Angle);
+                const line1EndY = centerY + line1Length * Math.sin(line1Angle);
+                
+                // Random intersection point along first line
+                actualPercentage = Math.floor(Math.random() * 101); // 0-100
+                const t = actualPercentage / 100;
+                
+                // Intersection point coordinates
+                const intersectX = centerX + (line1EndX - centerX) * t;
+                const intersectY = centerY + (line1EndY - centerY) * t;
+                
+                // Generate second line (red) that intersects at the point
+                const line2Length = maxLineLength * (0.4 + Math.random() * 0.4); // 40-80% of max
+                const line2Angle = Math.random() * Math.PI * 2; // 0-360 degrees
+                
+                // Calculate endpoints for second line
+                const line2StartX = intersectX - (line2Length/2) * Math.cos(line2Angle);
+                const line2StartY = intersectY - (line2Length/2) * Math.sin(line2Angle);
+                const line2EndX = intersectX + (line2Length/2) * Math.cos(line2Angle);
+                const line2EndY = intersectY + (line2Length/2) * Math.sin(line2Angle);
+                
+                // Store line data
+                line1 = {
+                    startX: centerX,
+                    startY: centerY,
+                    endX: line1EndX,
+                    endY: line1EndY,
+                    angle: line1Angle,
+                    length: line1Length
+                };
+                
+                line2 = {
+                    startX: line2StartX,
+                    startY: line2StartY,
+                    endX: line2EndX,
+                    endY: line2EndY,
+                    angle: line2Angle,
+                    length: line2Length
+                };
+                
+                intersect = {
+                    x: intersectX,
+                    y: intersectY
+                };
+            }
+            
+            // Draw the scene
+            function drawScene() {
+                // Clear canvas
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                if (!line1 || !line2 || !intersect) return;
+                
+                // Draw first line (black) with animation
+                ctx.beginPath();
+                if (isAnimating) {
+                    // Animated line drawing
+                    const animLength = line1.length * animationProgress;
+                    ctx.moveTo(line1.startX, line1.startY);
+                    ctx.lineTo(
+                        line1.startX + animLength * Math.cos(line1.angle),
+                        line1.startY + animLength * Math.sin(line1.angle)
+                    );
+                } else {
+                    // Full line
+                    ctx.moveTo(line1.startX, line1.startY);
+                    ctx.lineTo(line1.endX, line1.endY);
+                }
+                ctx.strokeStyle = '#000';
+                ctx.lineWidth = 3;
+                ctx.stroke();
+                
+                // Draw second line (red) with animation
+                ctx.beginPath();
+                if (isAnimating) {
+                    // Animated line drawing (from center out)
+                    const halfAnimLength = (line2.length / 2) * animationProgress;
+                    ctx.moveTo(
+                        intersect.x - halfAnimLength * Math.cos(line2.angle),
+                        intersect.y - halfAnimLength * Math.sin(line2.angle)
+                    );
+                    ctx.lineTo(
+                        intersect.x + halfAnimLength * Math.cos(line2.angle),
+                        intersect.y + halfAnimLength * Math.sin(line2.angle)
+                    );
+                } else {
+                    // Full line
+                    ctx.moveTo(line2.startX, line2.startY);
+                    ctx.lineTo(line2.endX, line2.endY);
+                }
+                ctx.strokeStyle = '#e74c3c';
+                ctx.lineWidth = 3;
+                ctx.stroke();
+                
+                // Draw intersection point (only after animation completes)
+                if (!isAnimating) {
+                    ctx.beginPath();
+                    ctx.arc(intersect.x, intersect.y, 5, 0, Math.PI * 2);
+                    ctx.fillStyle = '#3498db';
+                    ctx.fill();
+                    
+                    // Draw End A and End B markers
+                    drawEndMarkers();
+                }
+                
+                // If showing result, draw the actual percentage
+                if (gameState === 'showingResult' && !isAnimating) {
+                    drawResultIndicators();
+                }
+            }
+            
+            // Draw end markers
+            function drawEndMarkers() {
+                // End A (start of line)
+                ctx.beginPath();
+                ctx.arc(line1.startX, line1.startY, 6, 0, Math.PI * 2);
+                ctx.fillStyle = '#2ecc71';
+                ctx.fill();
+                ctx.font = 'bold 14px Arial';
+                ctx.fillStyle = '#2ecc71';
+                ctx.fillText('A', line1.startX - 5, line1.startY + 5);
+                
+                // End B (end of line)
+                ctx.beginPath();
+                ctx.arc(line1.endX, line1.endY, 6, 0, Math.PI * 2);
+                ctx.fillStyle = '#e74c3c';
+                ctx.fill();
+                ctx.font = 'bold 14px Arial';
+                ctx.fillStyle = '#e74c3c';
+                ctx.fillText('B', line1.endX - 5, line1.endY + 5);
+            }
+            
+            // Draw result indicators
+            function drawResultIndicators() {
+                // Determine actual percentage based on selected end
+                const actualValue = selectedEnd === 'endA' ? actualPercentage : 100 - actualPercentage;
+                
+                // Draw visual indicator of the actual percentage
+                const t = actualPercentage / 100;
+                const indicatorX = line1.startX + (line1.endX - line1.startX) * t;
+                const indicatorY = line1.startY + (line1.endY - line1.startY) * t;
+                
+                // Draw circle at actual point
+                ctx.beginPath();
+                ctx.arc(indicatorX, indicatorY, 8, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(46, 204, 113, 0.7)';
+                ctx.fill();
+                
+                // Draw line from actual point to text
+                ctx.beginPath();
+                ctx.moveTo(indicatorX, indicatorY);
+                ctx.lineTo(indicatorX + 40, indicatorY - 40);
+                ctx.strokeStyle = 'rgba(46, 204, 113, 0.7)';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                
+                // Draw text showing actual percentage
+                ctx.font = 'bold 20px Arial';
+                ctx.fillStyle = '#2ecc71';
+                ctx.fillText(`${actualValue}%`, indicatorX + 45, indicatorY - 45);
+                
+                // Draw visual indicator of the guessed percentage
+                const guessedT = guessPercentage / 100;
+                // Adjust based on selected end
+                const adjustedT = selectedEnd === 'endA' ? guessedT : 1 - guessedT;
+                const guessedX = line1.startX + (line1.endX - line1.startX) * adjustedT;
+                const guessedY = line1.startY + (line1.endY - line1.startY) * adjustedT;
+                
+                // Draw circle at guessed point
+                ctx.beginPath();
+                ctx.arc(guessedX, guessedY, 8, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(241, 196, 15, 0.7)';
+                ctx.fill();
+                
+                // Draw line from guessed point to text
+                ctx.beginPath();
+                ctx.moveTo(guessedX, guessedY);
+                ctx.lineTo(guessedX - 40, guessedY - 40);
+                ctx.strokeStyle = 'rgba(241, 196, 15, 0.7)';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                
+                // Draw text showing guessed percentage
+                ctx.font = 'bold 20px Arial';
+                ctx.fillStyle = '#f1c40f';
+                ctx.fillText(`${guessPercentage}%`, guessedX - 60, guessedY - 45);
+            }
+            
+            // Submit the user's guess
+            function submitGuess() {
+                if (isAnimating) return;
+                
+                const guess = parseInt(percentageInput.value);
+                
+                // Validate input
+                if (isNaN(guess)) {
+                    resultText.textContent = "Please enter a number!";
+                    accuracyText.textContent = "";
+                    return;
+                }
+                
+                if (guess < 0 || guess > 100) {
+                    resultText.textContent = "Enter a percentage between 0 and 100!";
+                    accuracyText.textContent = "";
+                    return;
+                }
+                
+                guessPercentage = guess;
+                
+                // Adjust actual percentage based on selected end
+                const actualValue = selectedEnd === 'endA' ? actualPercentage : 100 - actualPercentage;
+                
+                // Calculate points with dual-end consideration
+                const diff1 = Math.abs(actualValue - guess);
+                const diff2 = Math.abs(actualValue - (100 - guess));
+                const difference = Math.min(diff1, diff2);
+                
+                let points = 0;
+                
+                if (difference === 0) {
+                    points = 3;
+                    streak++;
+                    resultText.textContent = `Perfect! Exactly ${actualValue}%!`;
+                    resultText.style.color = "#2ecc71";
+                } else if (difference <= 10) {
+                    points = 1;
+                    streak++;
+                    resultText.textContent = `Good! ${actualValue}% (${difference}% off)`;
+                    resultText.style.color = "#f1c40f";
+                } else {
+                    streak = 0;
+                    resultText.textContent = `Missed! Actual: ${actualValue}% (${difference}% off)`;
+                    resultText.style.color = "#e74c3c";
+                }
+                
+                // Update score
+                score += points;
+                scoreElement.textContent = score;
+                streakElement.textContent = streak;
+                
+                // Show accuracy feedback
+                accuracyText.textContent = `You earned ${points} point${points !== 1 ? 's' : ''}!`;
+                accuracyText.style.color = points === 3 ? "#2ecc71" : points === 1 ? "#f1c40f" : "#e74c3c";
+                
+                // Update UI
+                gameState = 'showingResult';
+                percentageInput.disabled = true;
+                submitBtn.style.display = 'none';
+                nextBtn.style.display = 'block';
+                
+                // Draw the result
+                drawScene();
+            }
+            
+            // Start next round
+            function nextRound() {
+                gameState = 'playing';
+                generateNewLines();
+                startAnimation();
+                
+                // Reset UI
+                percentageInput.value = "";
+                percentageInput.disabled = false;
+                resultText.textContent = "";
+                accuracyText.textContent = "";
+                resultText.style.color = "";
+                accuracyText.style.color = "";
+                submitBtn.style.display = 'block';
+                nextBtn.style.display = 'none';
+                
+                // Focus input
+                percentageInput.focus();
+            }
+            
+            // Initialize the game
+            initGame();
+        });
+    </script>
+</body>
+</html>
