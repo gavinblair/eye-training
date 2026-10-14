@@ -34,6 +34,12 @@
             border-radius: 6px; padding: 8px 12px;
             font-size: 11px; color: #7a8a9e;
         }
+        canvas {
+    display: block;
+    cursor: grab;
+    touch-action: none; /* Prevents browser pull-to-refresh & page scrolling */
+}
+
     </style>
 </head>
 <body>
@@ -336,6 +342,53 @@
         const zoomFactor = e.deltaY < 0 ? 1.1 : 0.9;
         scale = Math.min(Math.max(0.3, scale * zoomFactor), 3.0);
     }, { passive: false });
+    
+    // --- MOBILE TOUCH & PINCH-ZOOM ENGINE ---
+let initialTouchDist = null;
+
+canvas.addEventListener('touchstart', (e) => {
+    if (e.touches.length === 1) {
+        // Single finger: Start drag pan
+        isDragging = true;
+        startX = e.touches[0].clientX - cameraX;
+        startY = e.touches[0].clientY - cameraY;
+    } else if (e.touches.length === 2) {
+        // Two fingers: Prepare pinch-to-zoom
+        isDragging = false;
+        initialTouchDist = Math.hypot(
+            e.touches[0].clientX - e.touches[1].clientX,
+            e.touches[0].clientY - e.touches[1].clientY
+        );
+    }
+}, { passive: false });
+
+window.addEventListener('touchmove', (e) => {
+    if (e.touches.length === 1 && isDragging) {
+        // Single finger: Pan canvas
+        cameraX = e.touches[0].clientX - startX;
+        cameraY = e.touches[0].clientY - startY;
+    } else if (e.touches.length === 2 && initialTouchDist) {
+        // Two fingers: Pinch zoom math
+        const currentDist = Math.hypot(
+            e.touches[0].clientX - e.touches[1].clientX,
+            e.touches[0].clientY - e.touches[1].clientY
+        );
+
+        const zoomRatio = currentDist / initialTouchDist;
+        scale = Math.min(Math.max(0.3, scale * zoomRatio), 3.0);
+        initialTouchDist = currentDist;
+    }
+}, { passive: false });
+
+window.addEventListener('touchend', (e) => {
+    if (e.touches.length < 2) {
+        initialTouchDist = null;
+    }
+    if (e.touches.length === 0) {
+        isDragging = false;
+    }
+});
+
 
     // Start App
     loadAssets().then(() => {
