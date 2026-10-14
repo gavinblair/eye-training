@@ -51,294 +51,286 @@
         Click & Drag to Pan | Scroll to Zoom
     </div>
 
-    <script>
-        const canvas = document.getElementById('isoCanvas');
-        const ctx = canvas.getContext('2d');
+<script>
+    const canvas = document.getElementById('isoCanvas');
+    const ctx = canvas.getContext('2d');
 
-        let width = canvas.width = window.innerWidth;
-        let height = canvas.height = window.innerHeight;
-        let scale = 1.0;
-        let cameraX = width / 2;
-        let cameraY = height / 4;
-        let isDragging = false;
-        let startX = 0, startY = 0;
+    let width = canvas.width = window.innerWidth;
+    let height = canvas.height = window.innerHeight;
+    let scale = 1.0;
+    let cameraX = width / 2;
+    let cameraY = height / 4;
+    let isDragging = false;
+    let startX = 0, startY = 0;
 
-        const TILE_W = 64;
-        const TILE_H = 32;
+    const TILE_W = 64;
+    const TILE_H = 32;
 
-        // --- ASSET MANAGER ---
-        const assets = {};
-        const textureSources = {
-            floorDark: null,     // Will be generated dynamically if no file provided
-            floorWhite: null,
-            plating: null,
-            wall: null,
-            glass: null,
-            airlock: null,
-            console: null,
-            plant: null,
-            crate: null
-        };
+    // --- ASSET MANAGER ---
+    const assets = {};
+    const textureSources = {
+        floorDark: null,
+        floorWhite: null,
+        plating: null,
+        wall: null,
+        glass: null,
+        airlock: null,
+        console: null,
+        plant: null,
+        crate: null
+    };
 
-        // --- PROCEDURAL TEXTURE GENERATOR (Generates bitmap PNG data URLs) ---
-        function createBitmapTexture(width, height, drawFn) {
-            const offscreen = document.createElement('canvas');
-            offscreen.width = width;
-            offscreen.height = height;
-            const octx = offscreen.getContext('2d');
-            drawFn(octx, width, height);
-            return offscreen.toDataURL('image/png');
-        }
+    // --- PROCEDURAL TEXTURE GENERATOR ---
+    function createBitmapTexture(width, height, drawFn) {
+        const offscreen = document.createElement('canvas');
+        offscreen.width = width;
+        offscreen.height = height;
+        const octx = offscreen.getContext('2d');
+        drawFn(octx, width, height);
+        return offscreen.toDataURL('image/png');
+    }
 
-        function generateDefaultSprites() {
-            // Isometric Floor (64x32)
-            textureSources.floorDark = createBitmapTexture(64, 32, (c) => {
-                c.fillStyle = '#1e2430';
-                c.beginPath(); c.moveTo(32,0); c.lineTo(64,16); c.lineTo(32,32); c.lineTo(0,16); c.closePath(); c.fill();
-                c.strokeStyle = '#2a3242'; c.lineWidth = 1; c.stroke();
+    function generateDefaultSprites() {
+        textureSources.floorDark = createBitmapTexture(64, 32, (c) => {
+            c.fillStyle = '#1e2430';
+            c.beginPath(); c.moveTo(32,0); c.lineTo(64,16); c.lineTo(32,32); c.lineTo(0,16); c.closePath(); c.fill();
+            c.strokeStyle = '#2a3242'; c.lineWidth = 1; c.stroke();
+        });
+
+        textureSources.floorWhite = createBitmapTexture(64, 32, (c) => {
+            c.fillStyle = '#b4c0d0';
+            c.beginPath(); c.moveTo(32,0); c.lineTo(64,16); c.lineTo(32,32); c.lineTo(0,16); c.closePath(); c.fill();
+            c.strokeStyle = '#d0dceb'; c.lineWidth = 1; c.stroke();
+        });
+
+        textureSources.plating = createBitmapTexture(64, 32, (c) => {
+            c.fillStyle = '#455060';
+            c.beginPath(); c.moveTo(32,0); c.lineTo(64,16); c.lineTo(32,32); c.lineTo(0,16); c.closePath(); c.fill();
+            c.strokeStyle = '#1a202c'; c.lineWidth = 1; c.stroke();
+        });
+
+        textureSources.wall = createBitmapTexture(64, 70, (c) => {
+            c.fillStyle = '#323c4a';
+            c.beginPath(); c.moveTo(0,16); c.lineTo(32,32); c.lineTo(32,70); c.lineTo(0,54); c.closePath(); c.fill();
+            c.fillStyle = '#222933';
+            c.beginPath(); c.moveTo(32,32); c.lineTo(64,16); c.lineTo(64,54); c.lineTo(32,70); c.closePath(); c.fill();
+            c.fillStyle = '#506075';
+            c.beginPath(); c.moveTo(32,0); c.lineTo(64,16); c.lineTo(32,32); c.lineTo(0,16); c.closePath(); c.fill();
+        });
+
+        textureSources.glass = createBitmapTexture(64, 56, (c) => {
+            c.fillStyle = 'rgba(50, 130, 180, 0.4)';
+            c.beginPath(); c.moveTo(0,16); c.lineTo(32,32); c.lineTo(32,56); c.lineTo(0,40); c.closePath(); c.fill();
+            c.fillStyle = 'rgba(30, 90, 140, 0.4)';
+            c.beginPath(); c.moveTo(32,32); c.lineTo(64,16); c.lineTo(64,40); c.lineTo(32,56); c.closePath(); c.fill();
+            c.fillStyle = 'rgba(82, 180, 233, 0.6)';
+            c.beginPath(); c.moveTo(32,0); c.lineTo(64,16); c.lineTo(32,32); c.lineTo(0,16); c.closePath(); c.fill();
+        });
+
+        textureSources.airlock = createBitmapTexture(64, 64, (c) => {
+            c.fillStyle = '#a67a0f';
+            c.beginPath(); c.moveTo(0,16); c.lineTo(32,32); c.lineTo(32,64); c.lineTo(0,48); c.closePath(); c.fill();
+            c.fillStyle = '#805e0b';
+            c.beginPath(); c.moveTo(32,32); c.lineTo(64,16); c.lineTo(64,48); c.lineTo(32,64); c.closePath(); c.fill();
+            c.fillStyle = '#d9a014';
+            c.beginPath(); c.moveTo(32,0); c.lineTo(64,16); c.lineTo(32,32); c.lineTo(0,16); c.closePath(); c.fill();
+            c.fillStyle = '#000000';
+            c.fillRect(28, 24, 8, 20);
+        });
+
+        textureSources.console = createBitmapTexture(64, 60, (c) => {
+            c.fillStyle = '#242b35';
+            c.beginPath(); c.moveTo(0,16); c.lineTo(32,32); c.lineTo(32,60); c.lineTo(0,44); c.closePath(); c.fill();
+            c.fillStyle = '#181e26';
+            c.beginPath(); c.moveTo(32,32); c.lineTo(64,16); c.lineTo(64,44); c.lineTo(32,60); c.closePath(); c.fill();
+            c.fillStyle = '#3a4659';
+            c.beginPath(); c.moveTo(32,0); c.lineTo(64,16); c.lineTo(32,32); c.lineTo(0,16); c.closePath(); c.fill();
+            c.fillStyle = '#00f0ff';
+            c.beginPath(); c.moveTo(20,12); c.lineTo(44,12); c.lineTo(36,24); c.lineTo(12,24); c.closePath(); c.fill();
+        });
+
+        textureSources.plant = createBitmapTexture(64, 48, (c) => {
+            c.fillStyle = '#42240a';
+            c.beginPath(); c.moveTo(0,16); c.lineTo(32,32); c.lineTo(32,48); c.lineTo(0,32); c.closePath(); c.fill();
+            c.fillStyle = '#2e7d32';
+            c.beginPath(); c.arc(32, 12, 14, 0, Math.PI * 2); c.fill();
+        });
+
+        textureSources.crate = createBitmapTexture(64, 50, (c) => {
+            c.fillStyle = '#966a22';
+            c.beginPath(); c.moveTo(0,16); c.lineTo(32,32); c.lineTo(32,50); c.lineTo(0,34); c.closePath(); c.fill();
+            c.fillStyle = '#735019';
+            c.beginPath(); c.moveTo(32,32); c.lineTo(64,16); c.lineTo(64,34); c.lineTo(32,50); c.closePath(); c.fill();
+            c.fillStyle = '#c28d38';
+            c.beginPath(); c.moveTo(32,0); c.lineTo(64,16); c.lineTo(32,32); c.lineTo(0,16); c.closePath(); c.fill();
+        });
+    }
+
+    // --- FIXED ASSET LOADER ---
+    function loadAssets() {
+        generateDefaultSprites();
+
+        const keys = Object.keys(textureSources);
+        let loaded = 0;
+
+        return new Promise((resolve) => {
+            keys.forEach(key => {
+                const img = new Image();
+
+                // Handler registered BEFORE setting .src
+                img.onload = () => {
+                    assets[key] = img;
+                    loaded++;
+                    if (loaded === keys.length) resolve();
+                };
+
+                // Fallback to prevent hanging if a path is invalid
+                img.onerror = (err) => {
+                    console.error(`Failed loading ${key}`, err);
+                    loaded++;
+                    if (loaded === keys.length) resolve();
+                };
+
+                // Set .src AFTER handlers attached
+                img.src = textureSources[key];
             });
+        });
+    }
 
-            textureSources.floorWhite = createBitmapTexture(64, 32, (c) => {
-                c.fillStyle = '#b4c0d0';
-                c.beginPath(); c.moveTo(32,0); c.lineTo(64,16); c.lineTo(32,32); c.lineTo(0,16); c.closePath(); c.fill();
-                c.strokeStyle = '#d0dceb'; c.lineWidth = 1; c.stroke();
-            });
+    // --- SS14 SHUTTLE GRID MAP ---
+    const grid = {};
 
-            textureSources.plating = createBitmapTexture(64, 32, (c) => {
-                c.fillStyle = '#455060';
-                c.beginPath(); c.moveTo(32,0); c.lineTo(64,16); c.lineTo(32,32); c.lineTo(0,16); c.closePath(); c.fill();
-                c.strokeStyle = '#1a202c'; c.lineWidth = 1; c.stroke();
-            });
-
-            // Extruded Wall Sprite (64x70)
-            textureSources.wall = createBitmapTexture(64, 70, (c) => {
-                // Left face
-                c.fillStyle = '#323c4a';
-                c.beginPath(); c.moveTo(0,16); c.lineTo(32,32); c.lineTo(32,70); c.lineTo(0,54); c.closePath(); c.fill();
-                // Right face
-                c.fillStyle = '#222933';
-                c.beginPath(); c.moveTo(32,32); c.lineTo(64,16); c.lineTo(64,54); c.lineTo(32,70); c.closePath(); c.fill();
-                // Top face
-                c.fillStyle = '#506075';
-                c.beginPath(); c.moveTo(32,0); c.lineTo(64,16); c.lineTo(32,32); c.lineTo(0,16); c.closePath(); c.fill();
-            });
-
-            // Glass Window Wall Sprite (64x56)
-            textureSources.glass = createBitmapTexture(64, 56, (c) => {
-                c.fillStyle = 'rgba(50, 130, 180, 0.4)';
-                c.beginPath(); c.moveTo(0,16); c.lineTo(32,32); c.lineTo(32,56); c.lineTo(0,40); c.closePath(); c.fill();
-                c.fillStyle = 'rgba(30, 90, 140, 0.4)';
-                c.beginPath(); c.moveTo(32,32); c.lineTo(64,16); c.lineTo(64,40); c.lineTo(32,56); c.closePath(); c.fill();
-                c.fillStyle = 'rgba(82, 180, 233, 0.6)';
-                c.beginPath(); c.moveTo(32,0); c.lineTo(64,16); c.lineTo(32,32); c.lineTo(0,16); c.closePath(); c.fill();
-            });
-
-            // Airlock Door Sprite (64x64)
-            textureSources.airlock = createBitmapTexture(64, 64, (c) => {
-                c.fillStyle = '#a67a0f';
-                c.beginPath(); c.moveTo(0,16); c.lineTo(32,32); c.lineTo(32,64); c.lineTo(0,48); c.closePath(); c.fill();
-                c.fillStyle = '#805e0b';
-                c.beginPath(); c.moveTo(32,32); c.lineTo(64,16); c.lineTo(64,48); c.lineTo(32,64); c.closePath(); c.fill();
-                c.fillStyle = '#d9a014';
-                c.beginPath(); c.moveTo(32,0); c.lineTo(64,16); c.lineTo(32,32); c.lineTo(0,16); c.closePath(); c.fill();
-                // Yellow stripe detail
-                c.fillStyle = '#000000';
-                c.fillRect(28, 24, 8, 20);
-            });
-
-            // Console Sprite (64x60)
-            textureSources.console = createBitmapTexture(64, 60, (c) => {
-                c.fillStyle = '#242b35';
-                c.beginPath(); c.moveTo(0,16); c.lineTo(32,32); c.lineTo(32,60); c.lineTo(0,44); c.closePath(); c.fill();
-                c.fillStyle = '#181e26';
-                c.beginPath(); c.moveTo(32,32); c.lineTo(64,16); c.lineTo(64,44); c.lineTo(32,60); c.closePath(); c.fill();
-                c.fillStyle = '#3a4659';
-                c.beginPath(); c.moveTo(32,0); c.lineTo(64,16); c.lineTo(32,32); c.lineTo(0,16); c.closePath(); c.fill();
-                // Screen glow
-                c.fillStyle = '#00f0ff';
-                c.beginPath(); c.moveTo(20,12); c.lineTo(44,12); c.lineTo(36,24); c.lineTo(12,24); c.closePath(); c.fill();
-            });
-
-            // Hydroponic Plant Sprite (64x48)
-            textureSources.plant = createBitmapTexture(64, 48, (c) => {
-                c.fillStyle = '#42240a';
-                c.beginPath(); c.moveTo(0,16); c.lineTo(32,32); c.lineTo(32,48); c.lineTo(0,32); c.closePath(); c.fill();
-                c.fillStyle = '#2e7d32';
-                c.beginPath(); c.arc(32, 12, 14, 0, Math.PI * 2); c.fill();
-            });
-
-            // Crate Sprite (64x50)
-            textureSources.crate = createBitmapTexture(64, 50, (c) => {
-                c.fillStyle = '#966a22';
-                c.beginPath(); c.moveTo(0,16); c.lineTo(32,32); c.lineTo(32,50); c.lineTo(0,34); c.closePath(); c.fill();
-                c.fillStyle = '#735019';
-                c.beginPath(); c.moveTo(32,32); c.lineTo(64,16); c.lineTo(64,34); c.lineTo(32,50); c.closePath(); c.fill();
-                c.fillStyle = '#c28d38';
-                c.beginPath(); c.moveTo(32,0); c.lineTo(64,16); c.lineTo(32,32); c.lineTo(0,16); c.closePath(); c.fill();
-            });
-        }
-
-        // --- ASSET LOADER ---
-        function loadAssets() {
-            generateDefaultSprites(); // Replace URLs in 'textureSources' to load real PNG images:
-            // textureSources.wall = './sprites/wall.png';
-
-            const keys = Object.keys(textureSources);
-            let loaded = 0;
-
-            return new Promise((resolve) => {
-                keys.forEach(key => {
-                    const img = new Image();
-                    img.src = textureSources[key];
-                    img.onload = () => {
-                        assets[key] = img;
-                        loaded++;
-                        if (loaded === keys.length) resolve();
-                    };
-                });
-            });
-        }
-
-        // --- SS14 SHUTTLE GRID MAP ---
-        const grid = {};
-
-        function addRoom(startX, startY, w, h, floorType = 'floorDark') {
-            for (let x = startX; x < startX + w; x++) {
-                for (let y = startY; y < startY + h; y++) {
-                    grid[`${x},${y}`] = { floor: floorType, object: null };
-                }
+    function addRoom(startX, startY, w, h, floorType = 'floorDark') {
+        for (let x = startX; x < startX + w; x++) {
+            for (let y = startY; y < startY + h; y++) {
+                grid[`${x},${y}`] = { floor: floorType, object: null };
             }
         }
+    }
 
-        // Layout Construction
-        addRoom(5, -3, 3, 4, 'floorWhite');
-        grid['5,-3'].object = 'console';
-        grid['6,-3'].object = 'console';
-        grid['7,-3'].object = 'console';
-        grid['5,0'].object = 'wall';
-        grid['6,0'].object = 'airlock';
-        grid['7,0'].object = 'wall';
+    addRoom(5, -3, 3, 4, 'floorWhite');
+    grid['5,-3'].object = 'console';
+    grid['6,-3'].object = 'console';
+    grid['7,-3'].object = 'console';
+    grid['5,0'].object = 'wall';
+    grid['6,0'].object = 'airlock';
+    grid['7,0'].object = 'wall';
 
-        addRoom(-3, -1, 5, 4, 'floorDark');
-        for (let x = -3; x <= 1; x++) {
-            grid[`${x},-2`].object = 'wall';
-            grid[`${x},3`].object = 'wall';
-        }
-        grid['-4,-1'].object = 'wall';
-        grid['-4,0'].object = 'wall';
-        grid['-4,1'].object = 'wall';
-        grid['-4,2'].object = 'wall';
+    addRoom(-3, -1, 5, 4, 'floorDark');
+    for (let x = -3; x <= 1; x++) {
+        grid[`${x},-2`].object = 'wall';
+        grid[`${x},3`].object = 'wall';
+    }
+    grid['-4,-1'].object = 'wall';
+    grid['-4,0'].object = 'wall';
+    grid['-4,1'].object = 'wall';
+    grid['-4,2'].object = 'wall';
 
-        addRoom(2, 2, 4, 4, 'plating');
-        grid['2,1'].object = 'wall';
-        grid['3,1'].object = 'glass';
-        grid['4,1'].object = 'glass';
-        grid['5,1'].object = 'wall';
-        grid['2,2'].object = 'plant';
-        grid['3,2'].object = 'plant';
-        grid['4,2'].object = 'plant';
-        grid['2,3'].object = 'plant';
-        grid['3,3'].object = 'plant';
-        grid['4,3'].object = 'plant';
-        grid['2,5'].object = 'wall';
-        grid['3,5'].object = 'airlock';
-        grid['4,5'].object = 'wall';
-        grid['5,5'].object = 'wall';
+    addRoom(2, 2, 4, 4, 'plating');
+    grid['2,1'].object = 'wall';
+    grid['3,1'].object = 'glass';
+    grid['4,1'].object = 'glass';
+    grid['5,1'].object = 'wall';
+    grid['2,2'].object = 'plant';
+    grid['3,2'].object = 'plant';
+    grid['4,2'].object = 'plant';
+    grid['2,3'].object = 'plant';
+    grid['3,3'].object = 'plant';
+    grid['4,3'].object = 'plant';
+    grid['2,5'].object = 'wall';
+    grid['3,5'].object = 'airlock';
+    grid['4,5'].object = 'wall';
+    grid['5,5'].object = 'wall';
 
-        addRoom(-3, 4, 5, 4, 'plating');
-        grid['-4,4'].object = 'wall';
-        grid['-4,5'].object = 'wall';
-        grid['-4,6'].object = 'wall';
-        grid['-4,7'].object = 'wall';
-        grid['2,4'].object = 'wall';
-        grid['2,6'].object = 'wall';
-        grid['2,7'].object = 'wall';
-        grid['-3,8'].object = 'wall';
-        grid['-2,8'].object = 'wall';
-        grid['-1,8'].object = 'airlock';
-        grid['0,8'].object = 'wall';
-        grid['1,8'].object = 'wall';
-        grid['-2,5'].object = 'crate';
-        grid['-1,5'].object = 'crate';
+    addRoom(-3, 4, 5, 4, 'plating');
+    grid['-4,4'].object = 'wall';
+    grid['-4,5'].object = 'wall';
+    grid['-4,6'].object = 'wall';
+    grid['-4,7'].object = 'wall';
+    grid['2,4'].object = 'wall';
+    grid['2,6'].object = 'wall';
+    grid['2,7'].object = 'wall';
+    grid['-3,8'].object = 'wall';
+    grid['-2,8'].object = 'wall';
+    grid['-1,8'].object = 'airlock';
+    grid['0,8'].object = 'wall';
+    grid['1,8'].object = 'wall';
+    grid['-2,5'].object = 'crate';
+    grid['-1,5'].object = 'crate';
 
-        // --- RENDER ENGINE WITH SPRITE ANCHORING ---
-        function render() {
-            ctx.fillStyle = '#080a12';
-            ctx.fillRect(0, 0, width, height);
+    // --- RENDER ENGINE ---
+    function render() {
+        ctx.fillStyle = '#080a12';
+        ctx.fillRect(0, 0, width, height);
 
-            // Back-to-Front Depth Sorting
-            const sortedKeys = Object.keys(grid).sort((a, b) => {
-                const [ax, ay] = a.split(',').map(Number);
-                const [bx, by] = b.split(',').map(Number);
-                return (ax + ay) - (bx + by) || ay - by;
-            });
-
-            sortedKeys.forEach(key => {
-                const [gx, gy] = key.split(',').map(Number);
-                const cell = grid[key];
-
-                // Screen Anchor Math
-                const isoX = (gx - gy) * (TILE_W / 2) * scale + cameraX;
-                const isoY = (gx + gy) * (TILE_H / 2) * scale + cameraY;
-
-                // 1. Draw Floor Tile
-                const floorImg = assets[cell.floor];
-                if (floorImg) {
-                    const drawW = floorImg.width * scale;
-                    const drawH = floorImg.height * scale;
-                    // Align center-top of floor diamond
-                    ctx.drawImage(floorImg, isoX - drawW / 2, isoY - (TILE_H / 2) * scale, drawW, drawH);
-                }
-
-                // 2. Draw Object/Wall Sprite on Top
-                if (cell.object && assets[cell.object]) {
-                    const objImg = assets[cell.object];
-                    const drawW = objImg.width * scale;
-                    const drawH = objImg.height * scale;
-                    
-                    // Align bottom-center of tall sprite to bottom diamond vertex
-                    const drawX = isoX - drawW / 2;
-                    const drawY = isoY + (TILE_H / 2) * scale - drawH;
-
-                    ctx.drawImage(objImg, drawX, drawY, drawW, drawH);
-                }
-            });
-
-            requestAnimationFrame(render);
-        }
-
-        // Input Listeners
-        window.addEventListener('resize', () => {
-            width = canvas.width = window.innerWidth;
-            height = canvas.height = window.innerHeight;
+        const sortedKeys = Object.keys(grid).sort((a, b) => {
+            const [ax, ay] = a.split(',').map(Number);
+            const [bx, by] = b.split(',').map(Number);
+            return (ax + ay) - (bx + by) || ay - by;
         });
 
-        canvas.addEventListener('mousedown', (e) => {
-            isDragging = true;
-            startX = e.clientX - cameraX;
-            startY = e.clientY - cameraY;
-        });
+        sortedKeys.forEach(key => {
+            const [gx, gy] = key.split(',').map(Number);
+            const cell = grid[key];
 
-        window.addEventListener('mousemove', (e) => {
-            if (isDragging) {
-                cameraX = e.clientX - startX;
-                cameraY = e.clientY - startY;
+            const isoX = (gx - gy) * (TILE_W / 2) * scale + cameraX;
+            const isoY = (gx + gy) * (TILE_H / 2) * scale + cameraY;
+
+            const floorImg = assets[cell.floor];
+            if (floorImg) {
+                const drawW = floorImg.width * scale;
+                const drawH = floorImg.height * scale;
+                ctx.drawImage(floorImg, isoX - drawW / 2, isoY - (TILE_H / 2) * scale, drawW, drawH);
+            }
+
+            if (cell.object && assets[cell.object]) {
+                const objImg = assets[cell.object];
+                const drawW = objImg.width * scale;
+                const drawH = objImg.height * scale;
+                const drawX = isoX - drawW / 2;
+                const drawY = isoY + (TILE_H / 2) * scale - drawH;
+                ctx.drawImage(objImg, drawX, drawY, drawW, drawH);
             }
         });
 
-        window.addEventListener('mouseup', () => isDragging = false);
+        requestAnimationFrame(render);
+    }
 
-        canvas.addEventListener('wheel', (e) => {
-            e.preventDefault();
-            const zoomFactor = e.deltaY < 0 ? 1.1 : 0.9;
-            scale = Math.min(Math.max(0.3, scale * zoomFactor), 3.0);
-        }, { passive: false });
+    // Input Listeners
+    window.addEventListener('resize', () => {
+        width = canvas.width = window.innerWidth;
+        height = canvas.height = window.innerHeight;
+    });
 
-        // Start App
-        loadAssets().then(() => {
-            document.getElementById('status').innerText = 'SS14 Interactive View Loaded';
-            render();
-        });
-    </script>
+    canvas.addEventListener('mousedown', (e) => {
+        isDragging = true;
+        startX = e.clientX - cameraX;
+        startY = e.clientY - cameraY;
+    });
+
+    window.addEventListener('mousemove', (e) => {
+        if (isDragging) {
+            cameraX = e.clientX - startX;
+            cameraY = e.clientY - startY;
+        }
+    });
+
+    window.addEventListener('mouseup', () => isDragging = false);
+
+    canvas.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        const zoomFactor = e.deltaY < 0 ? 1.1 : 0.9;
+        scale = Math.min(Math.max(0.3, scale * zoomFactor), 3.0);
+    }, { passive: false });
+
+    // Start App
+    loadAssets().then(() => {
+        document.getElementById('status').innerText = 'SS14 Interactive View Loaded';
+        render();
+    });
+</script>
+
+        
+        
 </body>
 </html>
