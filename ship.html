@@ -208,56 +208,70 @@
         }
     }
 
-    addRoom(5, -3, 3, 4, 'floorWhite');
-    grid['5,-3'].object = 'console';
-    grid['6,-3'].object = 'console';
-    grid['7,-3'].object = 'console';
-    grid['5,0'].object = 'wall';
-    grid['6,0'].object = 'airlock';
-    grid['7,0'].object = 'wall';
+    // Safe helper to place objects without throwing if the coordinate hasn't been initialized
+    function setObject(x, y, objectType, defaultFloor = 'floorDark') {
+        const key = `${x},${y}`;
+        if (!grid[key]) {
+            grid[key] = { floor: defaultFloor, object: null };
+        }
+        grid[key].object = objectType;
+    }
 
+    // 1. Cockpit / Bridge
+    addRoom(5, -3, 3, 4, 'floorWhite');
+    setObject(5, -3, 'console');
+    setObject(6, -3, 'console');
+    setObject(7, -3, 'console');
+    setObject(5, 0, 'wall');
+    setObject(6, 0, 'airlock');
+    setObject(7, 0, 'wall');
+
+    // 2. Bar & Lounge
     addRoom(-3, -1, 5, 4, 'floorDark');
     for (let x = -3; x <= 1; x++) {
-        grid[`${x},-2`].object = 'wall';
-        grid[`${x},3`].object = 'wall';
+        setObject(x, -2, 'wall');
+        setObject(x, 3, 'wall');
     }
-    grid['-4,-1'].object = 'wall';
-    grid['-4,0'].object = 'wall';
-    grid['-4,1'].object = 'wall';
-    grid['-4,2'].object = 'wall';
+    setObject(-4, -1, 'wall');
+    setObject(-4, 0, 'wall');
+    setObject(-4, 1, 'wall');
+    setObject(-4, 2, 'wall');
 
+    // 3. Hydroponics Bay
     addRoom(2, 2, 4, 4, 'plating');
-    grid['2,1'].object = 'wall';
-    grid['3,1'].object = 'glass';
-    grid['4,1'].object = 'glass';
-    grid['5,1'].object = 'wall';
-    grid['2,2'].object = 'plant';
-    grid['3,2'].object = 'plant';
-    grid['4,2'].object = 'plant';
-    grid['2,3'].object = 'plant';
-    grid['3,3'].object = 'plant';
-    grid['4,3'].object = 'plant';
-    grid['2,5'].object = 'wall';
-    grid['3,5'].object = 'airlock';
-    grid['4,5'].object = 'wall';
-    grid['5,5'].object = 'wall';
+    setObject(2, 1, 'wall');
+    setObject(3, 1, 'glass');
+    setObject(4, 1, 'glass');
+    setObject(5, 1, 'wall');
+    setObject(2, 2, 'plant');
+    setObject(3, 2, 'plant');
+    setObject(4, 2, 'plant');
+    setObject(2, 3, 'plant');
+    setObject(3, 3, 'plant');
+    setObject(4, 3, 'plant');
+    setObject(2, 5, 'wall');
+    setObject(3, 5, 'airlock');
+    setObject(4, 5, 'wall');
+    setObject(5, 5, 'wall');
 
+    // 4. Engineering & Cargo
     addRoom(-3, 4, 5, 4, 'plating');
-    grid['-4,4'].object = 'wall';
-    grid['-4,5'].object = 'wall';
-    grid['-4,6'].object = 'wall';
-    grid['-4,7'].object = 'wall';
-    grid['2,4'].object = 'wall';
-    grid['2,6'].object = 'wall';
-    grid['2,7'].object = 'wall';
-    grid['-3,8'].object = 'wall';
-    grid['-2,8'].object = 'wall';
-    grid['-1,8'].object = 'airlock';
-    grid['0,8'].object = 'wall';
-    grid['1,8'].object = 'wall';
-    grid['-2,5'].object = 'crate';
-    grid['-1,5'].object = 'crate';
+    setObject(-4, 4, 'wall');
+    setObject(-4, 5, 'wall');
+    setObject(-4, 6, 'wall');
+    setObject(-4, 7, 'wall');
+    setObject(2, 4, 'wall');
+    setObject(2, 6, 'wall');
+    setObject(2, 7, 'wall');
+    setObject(-3, 8, 'wall');
+    setObject(-2, 8, 'wall');
+    setObject(-1, 8, 'airlock');
+    setObject(0, 8, 'wall');
+    setObject(1, 8, 'wall');
+    setObject(-2, 5, 'crate');
+    setObject(-1, 5, 'crate');
 
+    
     // --- RENDER ENGINE ---
     function render() {
         ctx.fillStyle = '#080a12';
